@@ -44,10 +44,71 @@ app.get('/setup', function(req, res) {
 var apiRoutes = express.Router();
 
 // route to authenticate user
+apiRoutes.post('/authenticate', function(req, res) {
+
+  // find the user
+  User.findOne({
+    name: req.body.name
+  }, function(err, user) {
+    if (err) throw err;
+
+    if(!user) {
+      res.json({
+        success: false,
+        message: 'Authentication failed. User not found'
+      });
+    } else if (user) {
+      if (user.password != req.body.password) {
+        res.json({
+          success: false,
+          message: 'Authentication failed. Wrong password.'
+        });
+      } else {
+        const payload = {
+          admin: user.admin
+        };
+        var token = jwt.sign(payload, app.get('superSecret'), {
+          expiresIn: 1440
+        });
+        res.json({
+          success: true,
+          message: 'Enjoy your token',
+          token: token 
+        });
+      }
+    }
+  });
+});
 
 
 // route middleware to verify token
+apiRoutes.use(function(req, res, next) {
+  // check for token
+  var token = req.body.token || req.query.token || req.headers['x-access-token'];
 
+  // decode token
+  if (token) {
+    // verify secret and checks exp
+    jwt.verify(token, app.get('superSecret'), function(err, decoded) {
+      if (err) {
+        return res.json({
+          success: false,
+          message: 'Failed to authenticate token.'
+        });
+      } else {
+        // save token to request
+        req.decoded = decoded;
+        next();
+      } 
+    });
+  } else {
+    // no token return error
+    return res.status(403).send({
+      success: false,
+      message: 'No token provided.'
+    });
+  }
+});
 
 // route to show a random message
 apiRoutes.get('/', function(req, res) {
