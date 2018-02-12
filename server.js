@@ -23,6 +23,48 @@ app.get('/', function(req, res) {
   res.send('Hello! The API is at http://localhost:' + port + '/api');
 });
 
+app.get('/setup', function(req, res) {
+  // create a sample user
+  var udin = new User({
+    name: 'udin',
+    password: 'password',
+    admin: true
+  });
+
+  udin.save(function(err) {
+    if (err) throw err;
+
+    console.log('User saved successfully!');
+    res.json({success: true});
+  });
+});
+
+// API ROUTES -----------------------------------
+
+var apiRoutes = express.Router();
+
+// route to authenticate user
+
+
+// route middleware to verify token
+
+
+// route to show a random message
+apiRoutes.get('/', function(req, res) {
+  res.json({message: 'Welcome to the coolest API on earth'});
+});
+
+// route to return all users
+apiRoutes.get('/users', function(req, res) {
+  User.find({}, function(err, users) {
+    res.json(users);
+  });
+});
+
+// apply the routes with the prefix /api
+app.use('/api', apiRoutes);
+
+
 app.listen(port);
 console.log('Magic happens at http://localhost:' + port);
 
